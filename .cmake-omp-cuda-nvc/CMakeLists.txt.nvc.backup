@@ -8,7 +8,9 @@ set(Boost_USE_MULTITHREADED ON)
 
 file(GLOB all_files ${PROJECT_SOURCE_DIR}/../src/*.cxx)
 
-string(APPEND CMAKE_CXX_FLAGS "-g --pedantic -mp=gpu -O3 -cudalib=cublas,curand,cufft -DOPENMP_ENABLE_CUDA -DARCH_CUDA")
+#find_package(CUDA REQUIRED)
+
+string(APPEND CMAKE_CXX_FLAGS "-g -O3 --pedantic -mp=gpu -O3 -cuda -cudalib=cublas,cufft -DOPENMP_ENABLE_CUDA -DARCH_CUDA")
 string(APPEND CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 
 add_library(WireCellGenOpenMP SHARED ${all_files})

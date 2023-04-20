@@ -1,0 +1,101 @@
+===================================323ccca2088e62adeb309c6678e4900a37148f21===================================
+1). In v1, output file is
+full_res_v1.ncu-rep,
+the slowest kernel is
+data_c[i0 +( dim_p * i1)] *= resp_f_w_k[i0 + (dim_p * i1)];
+
+Change the order of loop:
+From first i0, next i1
+To first i1, next i0
+
+Old time:
+Time for data_c *= resp_f_w_k = 24.6611 ms
+Time for data_c *= resp_f_w_k = 17.8809 ms
+Time for data_c *= resp_f_w_k = 7.98607 ms
+
+New time:
+Time for data_c *= resp_f_w_k = 7.21908 ms
+Time for data_c *= resp_f_w_k = 5.512 ms
+Time for data_c *= resp_f_w_k = 2.56705 ms
+
+Result in full_res_v2.ncu-rep
+Question:
+why this kernel needs 75 registers?
+What schedule or tile should I use to improve memory coalescing?
+
+
+2). Same kernel, introduce an intermediate variable to save idx, hope to see decrease in register number. Decrease a little bit, but almost no use. Result is in v3.
+
+
+===================================484851f6b78978de13d94b40ff13316245a6ec7e===================================
+1). Actually we can rewrite this kernel by removing collapse, as we just need to linear scan it
+Thers is a small comparison between this two, see
+/home/twang/test/test_simple_register_num/omp_loop_collapse_manually_v1
+
+Number of registers per thread decreases dramatically
+This kernel is extremely mem bound. Can we do some kind of fusion?
+
+Performance increase a lot. Why collapse performs so bad?
+
+Time for data_c *= resp_f_w_k = 4.19188 ms
+Time for data_c *= resp_f_w_k = 3.29804 ms
+Time for data_c *= resp_f_w_k = 1.53899 ms
+
+Result is in v4
+
+
+===================================7546d0d9de3dc9c0383be85d6b804f092ed785ff===================================
+1). Apply this technique to all similar kernels, where a collapse show up and inner loop is independent to the outer loop
+Exception: acc_data_f_w[i0 + (acc_dim_p * i1)] = data_c[(i0 + 1) * 10 + (dim_p * i1)];
+
+All of that is applied to fft.
+Can I combine the normalization step with later steps?
+
+Result is in v5
+
+
+
+===================================correctness check step 1===================================
+I made a mistake. Actually the results are the same. When I try to turn off RNG in kokkos code, I comment out the wrong line in host mode, and I actually should comment out the line in the non-host mode. After that patch results are identical (quite strange, there is no floating point error)
+
+
+
+
+===================================correctness check step 2===================================
+When it comes to f_data (one computed from get_charge_matrix), there is a little bit floating point error as below:
+
+twang@lambda1:~/myWork/wire-cell-gen-omp/build$ diff log_temp_crosscheck_f_data_v1_no_rng_with_scan_base_05.log /work/twang/wc-test-only-nc/wire-cell-gen-kokkos/log_temp_crosscheck_f_data_v1_no_rng_base_05.log
+890c890
+< tw: DEBUG: ip = 256    it = 1328       f_data = -0.722101
+---
+> tw: DEBUG: ip = 256    it = 1328       f_data = -0.7221
+913c913
+< tw: DEBUG: ip = 512    it = 1992       f_data = -407.092
+---
+> tw: DEBUG: ip = 512    it = 1992       f_data = -407.091
+
+Possibly due to the implementation difference in atomic add
+
+
+
+===================================correctness check step 3===================================
+We then compare final result, m_decon_data. Seems like they are very different from each other, however the sum are very similar, only differs by about 0.01%. To see what happens, look at S(f)*R(f) result (data_c before idft). They are still very different from each other.
+
+
+
+
+===================================correctness check step 4===================================
+It seems like the difference comes from resp matrix. Need to test if data_c is the same or not after dft.
+The results of data_c after two dfts are the same with a small difference maybe due to floating point error (smaller than or around 0.001%)
+Seems like even sp_t_reduced is different! and N0 is also different: 6125(kokkos) vs 6655(omp) 
+After using the new version, results are the at least for response matrix
+
+
+In log_no_rng_benchmark_v2.log, I remove part 1 and part 2 of get_charge_matrix
+
+
+# comment
+1). objdump (-d, -D) for assembly code
+2). memory coalescing, maybe real and imag are fetched at different calls
+  To test this, try thread i read 2i and 2i+1
+3). VERY IMPORTANT: CHECK IF EVERYTHING IS ZERO INITIALIZED!!!!  
