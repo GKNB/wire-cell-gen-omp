@@ -1,8 +1,9 @@
 #ifndef WIRECELL_GENOPENMP_IMPACTTRANSFORM
 #define WIRECELL_GENOPENMP_IMPACTTRANSFORM
 
-#include "WireCellIface/IPlaneImpactResponse.h"
 #include "WireCellGenOpenMP/BinnedDiffusion_transform.h"
+#include "WireCellIface/IPlaneImpactResponse.h"
+#include "WireCellIface/IDFT.h"
 #include "WireCellUtil/Array.h"
 #include "WireCellUtil/Logging.h"
 
@@ -17,6 +18,7 @@ namespace WireCell {
         class ImpactTransform {
             IPlaneImpactResponse::pointer m_pir;
             BinnedDiffusion_transform& m_bd;
+            IDFT::pointer m_dft;
 
             int m_num_group;     // how many 2D convolution is needed
             int m_num_pad_wire;  // how many wires are needed to pad on each side
@@ -34,7 +36,7 @@ namespace WireCell {
             Log::logptr_t log;
 
            public:
-            ImpactTransform(IPlaneImpactResponse::pointer pir, BinnedDiffusion_transform& bd);
+            ImpactTransform(IPlaneImpactResponse::pointer pir, const IDFT::pointer& dft, BinnedDiffusion_transform& bd);
             virtual ~ImpactTransform();
 
             bool transform_vector();

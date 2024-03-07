@@ -4,13 +4,14 @@
  */
 
 #include "WireCellUtil/Waveform.h"
+#include "WireCellIface/IDFT.h"
 #include "WireCellGenOpenMP/GaussianDiffusion.h"
 
 #include <memory>
 #include <vector>
 
-#ifndef WIRECELLGEN_IMPACTDATA
-#define WIRECELLGEN_IMPACTDATA
+#ifndef WIRECELL_GENOPENMP_IMPACTDATA
+#define WIRECELL_GENOPENMP_IMPACTDATA
 
 namespace WireCell {
     namespace GenOpenMP {
@@ -56,7 +57,7 @@ namespace WireCell {
              * linear or constant (all = 0.5),
              * and honoring the Gaussian distribution (diffusion).
              */
-	    void calculate(int nticks) const;
+      void calculate(const IDFT::pointer& dft, int nticks) const;
 
 
 

@@ -174,7 +174,7 @@ local app = {
 local cmdline = {
     type: "wire-cell",
     data: {
-        plugins: ["WireCellGen", "WireCellGenOpenMP", "WireCellPgraph", "WireCellSio", "WireCellSigProc", "WireCellRoot","WireCellHio"],
+        plugins: ["WireCellSio", "WireCellGen", "WireCellSigProc","WireCellApps", "WireCellPgraph", "WireCellTbb", "WireCellGenOpenMP"],
         apps: ["Pgrapher"]
     }
 };

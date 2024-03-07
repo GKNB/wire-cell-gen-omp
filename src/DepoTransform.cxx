@@ -41,6 +41,8 @@
 #include "WireCellGenOpenMP/ImpactTransform.h"
 #include "WireCellUtil/NamedFactory.h"
 #include "WireCellIface/IAnodePlane.h"
+// #include "WireCellAux/SimpleTrace.h"
+// #include "WireCellAux/SimpleFrame.h"
 #include "WireCellIface/SimpleTrace.h"
 #include "WireCellIface/SimpleFrame.h"
 #include "WireCellGenOpenMP/BinnedDiffusion_transform.h"
@@ -51,6 +53,8 @@ WIRECELL_FACTORY(GenOpenMPDepoTransform, WireCell::GenOpenMP::DepoTransform, Wir
 
 using namespace WireCell;
 using namespace std;
+// using WireCell::Aux::SimpleTrace;
+// using WireCell::Aux::SimpleFrame;
 
 GenOpenMP::DepoTransform::DepoTransform()
   : m_start_time(0.0 * units::ns)
@@ -79,6 +83,8 @@ void GenOpenMP::DepoTransform::configure(const WireCell::Configuration& cfg)
         m_rng = Factory::find_tn<IRandom>(rng_tn);
     }
 
+    std::string dft_tn = get<std::string>(cfg, "dft", "FftwDFT");
+    m_dft = Factory::find_tn<IDFT>(dft_tn);
     m_readout_time = get<double>(cfg, "readout_time", m_readout_time);
     m_tick = get<double>(cfg, "tick", m_tick);
     m_start_time = get<double>(cfg, "start_time", m_start_time);
@@ -225,7 +231,7 @@ bool GenOpenMP::DepoTransform::operator()(const input_pointer& in, output_pointe
             auto& wires = plane->wires();
 
             auto pir = m_pirs.at(iplane);
-            GenOpenMP::ImpactTransform transform(pir, bindiff);
+            GenOpenMP::ImpactTransform transform(pir, m_dft, bindiff);
 
             if(m_transform.compare("transform_vector")==0) 
             {
