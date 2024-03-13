@@ -1,9 +1,16 @@
-module load PrgEnv-nvhpc
-nvc++ --version
+#It is very important to make sure wcg is installed with spdlog-1.8.2, with later version, you might see error like in:
+#https://github.com/fmtlib/fmt/issues/3005
+#Important! The libomptarget.so of rocm/5.3.0 seems to have some bug, please use a later version of rocm/amd module!!
 
+module load PrgEnv-gnu
+CC --version
+
+cd ..
 git clone -c feature.manyFiles=true https://github.com/spack/spack.git
 . spack/share/spack/setup-env.sh
 which spack
+
+cd wire-cell-gen-porting
 git clone https://github.com/WireCell/wire-cell-spack.git wct-spack
 cd wct-spack
 git checkout f1a95969c14b7aac737464e8f1888a1ba39fd07b
@@ -13,15 +20,18 @@ spack repo rm wct-spack
 spack repo add wct-spack
 
 spack compiler find
-spack install wire-cell-toolkit@0.20.0
+spack install wire-cell-toolkit@0.20.0 ^boost@1.82.0 ^spdlog@1.8.2
 
+module load PrgEnv-amd/8.5.0
+module load amd/5.7.1
+module load craype-accel-amd-gfx90a
 git clone https://github.com/GKNB/wire-cell-gen-omp.git
-cd wire-cell-gen-omp; git checkout -b standalone origin/standalone; cd ..
+cd wire-cell-gen-omp; git checkout -b standalone origin/standalone-frontier; cd ..
 
 #For CPU
-export WC_BUILD_DIR=/global/homes/t/tianle/myWork/wire-cell-gen-porting/build-wcg-standalone/openmp/nvc-23-9/CPU
+#export WC_BUILD_DIR=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/build-wcg-standalone/openmp/amd/CPU
 #For GPU
-#export WC_BUILD_DIR=/global/homes/t/tianle/myWork/wire-cell-gen-porting/build-wcg-standalone/openmp/nvc-23-9/GPU
+export WC_BUILD_DIR=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/build-wcg-standalone/openmp/amd/GPU
 rm -r $WC_BUILD_DIR
 
 export WC_OMP_SRC_DIR=${PWD}/wire-cell-gen-omp
@@ -48,14 +58,14 @@ export JSONNET_DIR=$(spack find -p go-jsonnet |grep go-jsonnet|awk '{print $2}')
 export JSONNET_INC=${JSONNET_DIR}/include
 
 #For CPU
-cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=nvc++ $WC_OMP_SRC_DIR/.cmake-omp-cpu
+#cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=CC $WC_OMP_SRC_DIR/.cmake-omp-cpu
 #For GPU
-#cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=nvc++ $WC_OMP_SRC_DIR/.cmake-omp-cuda
+cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=CC $WC_OMP_SRC_DIR/.cmake-omp-cuda
 
 make -C ${WC_BUILD_DIR} -j 10
 
-export WIRECELL_PATH=/global/homes/t/tianle/myWork/wire-cell-gen-porting/wire-cell-toolkit/cfg  #  main CFG
-export WIRECELL_PATH=/global/homes/t/tianle/myWork/wire-cell-gen-porting/wire-cell-data/:$WIRECELL_PATH   # data
+export WIRECELL_PATH=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/wire-cell-toolkit/cfg  #  main CFG
+export WIRECELL_PATH=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/wire-cell-data/:$WIRECELL_PATH   # data
 export WIRECELL_PATH=$WC_OMP_SRC_DIR/cfg:$WIRECELL_PATH
 export LD_LIBRARY_PATH=${WC_BUILD_DIR}:$LD_LIBRARY_PATH
 

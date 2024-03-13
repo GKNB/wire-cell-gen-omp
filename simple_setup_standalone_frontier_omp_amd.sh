@@ -1,14 +1,15 @@
-module load PrgEnv-llvm
-clang --version
+module load PrgEnv-amd/8.5.0
+module load amd/5.7.1
+module load craype-accel-amd-gfx90a
+CC --version
 
-. spack/share/spack/setup-env.sh
+. /lustre/orion/phy157/world-shared/tianle/spack/share/spack/setup-env.sh
 which spack
 
 #For CPU
-#export WC_BUILD_DIR=/global/homes/t/tianle/myWork/wire-cell-gen-porting/build-wcg-standalone/openmp/clang-17/CPU
+#export WC_BUILD_DIR=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/build-wcg-standalone/openmp/amd/CPU
 #For GPU
-export WC_BUILD_DIR=/global/homes/t/tianle/myWork/wire-cell-gen-porting/build-wcg-standalone/openmp/clang-17/GPU
-
+export WC_BUILD_DIR=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/build-wcg-standalone/openmp/amd/GPU
 rm -r $WC_BUILD_DIR
 
 export WC_OMP_SRC_DIR=${PWD}/wire-cell-gen-omp
@@ -24,14 +25,14 @@ export JSONNET_DIR=$(spack find -p go-jsonnet |grep go-jsonnet|awk '{print $2}')
 export JSONNET_INC=${JSONNET_DIR}/include
 
 #For CPU
-#cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=clang++ $WC_OMP_SRC_DIR/.cmake-omp-cpu
+#cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=CC $WC_OMP_SRC_DIR/.cmake-omp-cpu
 #For GPU
-cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=clang++ $WC_OMP_SRC_DIR/.cmake-omp-cuda
+cmake -B ${WC_BUILD_DIR} -DCMAKE_CXX_COMPILER=CC $WC_OMP_SRC_DIR/.cmake-omp-amd
 
 make -C ${WC_BUILD_DIR} -j 10
 
-export WIRECELL_PATH=/global/homes/t/tianle/myWork/wire-cell-gen-porting/wire-cell-toolkit/cfg  #  main CFG
-export WIRECELL_PATH=/global/homes/t/tianle/myWork/wire-cell-gen-porting/wire-cell-data/:$WIRECELL_PATH   # data
+export WIRECELL_PATH=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/wire-cell-toolkit/cfg  #  main CFG
+export WIRECELL_PATH=/lustre/orion/phy157/world-shared/tianle/wire-cell-gen-porting/wire-cell-data/:$WIRECELL_PATH   # data
 export WIRECELL_PATH=$WC_OMP_SRC_DIR/cfg:$WIRECELL_PATH
 export LD_LIBRARY_PATH=${WC_BUILD_DIR}:$LD_LIBRARY_PATH
 
